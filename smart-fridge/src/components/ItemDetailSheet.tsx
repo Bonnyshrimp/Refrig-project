@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FridgeItem } from '../data/mock';
 import { DANGER_WARNING, ESTIMATE_WARNING, SPOILAGE_GUIDE } from '../data/spoilageGuide';
@@ -29,7 +29,11 @@ export default function ItemDetailSheet({ item, onClose, onDiscard }: Props) {
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* หัวรายการ */}
           <View style={styles.headerRow}>
-            <Text style={styles.emoji}>{item.emoji}</Text>
+            {item.photoUri ? (
+              <Image source={{ uri: item.photoUri }} style={styles.photo} />
+            ) : (
+              <Text style={styles.emoji}>{item.emoji}</Text>
+            )}
             <View style={styles.headerInfo}>
               <Text style={styles.name}>{item.name}</Text>
               <View style={styles.badgeRow}>
@@ -140,6 +144,11 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 44,
+  },
+  photo: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
   },
   headerInfo: {
     flex: 1,

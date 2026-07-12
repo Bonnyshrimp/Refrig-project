@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ItemDetailSheet from '../components/ItemDetailSheet';
 import ScreenHeader from '../components/ScreenHeader';
-import { FridgeItem, MOCK_FRIDGE_ITEMS, Zone } from '../data/mock';
+import { useFridge } from '../context/FridgeContext';
+import { FridgeItem, Zone } from '../data/mock';
 import { cardShadow, colors, fonts, radius } from '../theme';
 import { daysLeftLabel, freshnessRatio, trafficColor } from '../utils/freshness';
 
@@ -25,7 +26,11 @@ function ItemCard({ item, onPress }: { item: FridgeItem; onPress: () => void }) 
       onPress={onPress}
       accessibilityRole="button"
     >
-      <Text style={styles.emoji}>{item.emoji}</Text>
+      {item.photoUri ? (
+        <Image source={{ uri: item.photoUri }} style={styles.photo} />
+      ) : (
+        <Text style={styles.emoji}>{item.emoji}</Text>
+      )}
       <View style={styles.info}>
         <View style={styles.nameRow}>
           <Text style={styles.name} numberOfLines={1}>
@@ -61,7 +66,7 @@ function ItemCard({ item, onPress }: { item: FridgeItem; onPress: () => void }) 
 }
 
 export default function FridgeScreen() {
-  const [items, setItems] = useState<FridgeItem[]>(MOCK_FRIDGE_ITEMS);
+  const { items, discardItem } = useFridge();
   const [filter, setFilter] = useState<Filter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -77,9 +82,8 @@ export default function FridgeScreen() {
   const urgentCount = items.filter((i) => i.daysLeft <= 2).length;
   const selectedItem = items.find((i) => i.id === selectedId) ?? null;
 
-  // ทิ้งแล้ว: ลบออกจากตู้ (การบันทึกสถิติของทิ้งจะต่อ waste_log ตอนเชื่อมฐานข้อมูล)
-  const discardItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const handleDiscard = (id: string) => {
+    discardItem(id);
     setSelectedId(null);
   };
 
@@ -126,7 +130,7 @@ export default function FridgeScreen() {
       <ItemDetailSheet
         item={selectedItem}
         onClose={() => setSelectedId(null)}
-        onDiscard={discardItem}
+        onDiscard={handleDiscard}
       />
     </SafeAreaView>
   );
@@ -199,6 +203,11 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 32,
+  },
+  photo: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
   },
   info: {
     flex: 1,

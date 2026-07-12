@@ -20,6 +20,15 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "แอปใช้กล้องเพื่อถ่ายรูปอาหารที่จะเก็บเข้าตู้เย็น",
+          "photosPermission": "แอปใช้คลังรูปเพื่อเลือกรูปอาหารที่จะเก็บเข้าตู้เย็น"
+        }
+      ]
+    ]
   }
 }

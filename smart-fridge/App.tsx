@@ -11,7 +11,9 @@ import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddSheet from './src/components/AddSheet';
+import LeftoverFlow from './src/components/LeftoverFlow';
 import TabBar from './src/components/TabBar';
+import { FridgeProvider } from './src/context/FridgeContext';
 import FridgeScreen from './src/screens/FridgeScreen';
 import HealthScreen from './src/screens/HealthScreen';
 import MenuScreen from './src/screens/MenuScreen';
@@ -29,6 +31,7 @@ export default function App() {
     Sarabun_700Bold,
   });
   const [addVisible, setAddVisible] = useState(false);
+  const [leftoverVisible, setLeftoverVisible] = useState(false);
 
   if (!fontsLoaded) {
     return (
@@ -40,19 +43,29 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <StatusBar style="dark" />
-        <Tab.Navigator
-          screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.frost } }}
-          tabBar={(props) => <TabBar {...props} onPressAdd={() => setAddVisible(true)} />}
-        >
-          <Tab.Screen name="Fridge" component={FridgeScreen} />
-          <Tab.Screen name="Menu" component={MenuScreen} />
-          <Tab.Screen name="Shopping" component={ShoppingScreen} />
-          <Tab.Screen name="Health" component={HealthScreen} />
-        </Tab.Navigator>
-        <AddSheet visible={addVisible} onClose={() => setAddVisible(false)} />
-      </NavigationContainer>
+      <FridgeProvider>
+        <NavigationContainer>
+          <StatusBar style="dark" />
+          <Tab.Navigator
+            screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.frost } }}
+            tabBar={(props) => <TabBar {...props} onPressAdd={() => setAddVisible(true)} />}
+          >
+            <Tab.Screen name="Fridge" component={FridgeScreen} />
+            <Tab.Screen name="Menu" component={MenuScreen} />
+            <Tab.Screen name="Shopping" component={ShoppingScreen} />
+            <Tab.Screen name="Health" component={HealthScreen} />
+          </Tab.Navigator>
+          <AddSheet
+            visible={addVisible}
+            onClose={() => setAddVisible(false)}
+            onSelectLeftover={() => {
+              setAddVisible(false);
+              setLeftoverVisible(true);
+            }}
+          />
+          <LeftoverFlow visible={leftoverVisible} onClose={() => setLeftoverVisible(false)} />
+        </NavigationContainer>
+      </FridgeProvider>
     </SafeAreaProvider>
   );
 }

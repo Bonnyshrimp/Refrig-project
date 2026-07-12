@@ -16,6 +16,7 @@ export interface FridgeItem {
   expirySource: ExpirySource;
   isLeftover: boolean; // ของเหลือ (อาหารปรุงแล้ว)
   category: FoodCategory; // หมวดสำหรับคู่มือสังเกตของเสีย
+  photoUri?: string; // รูปที่ผู้ใช้ถ่าย/เลือกเอง ถ้าไม่มีใช้อีโมจิ
 }
 
 export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
