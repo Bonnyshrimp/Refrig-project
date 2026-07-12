@@ -1,5 +1,5 @@
-import { FridgeItem } from '../data/mock';
 import { colors } from '../theme';
+import { FridgeItem } from '../types';
 
 // ระบบไฟจราจรตาม PRD 3.1: เขียว >3 วัน / เหลือง 1–2 วัน / แดง หมดวันนี้หรือเกินแล้ว
 export function trafficColor(daysLeft: number): string {

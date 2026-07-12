@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LEFTOVER_SHELF_LIFE, useFridge } from '../context/FridgeContext';
-import { Zone } from '../data/mock';
+import { Zone } from '../types';
 import { cardShadow, colors, fonts, radius } from '../theme';
 
 interface Props {
@@ -46,6 +46,7 @@ export default function LeftoverFlow({ visible, onClose }: Props) {
   const [photoUri, setPhotoUri] = useState<string | undefined>();
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('🍲');
+  const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setStep('photo');
@@ -86,9 +87,17 @@ export default function LeftoverFlow({ visible, onClose }: Props) {
     setStep('zone');
   };
 
-  const save = (zone: Zone) => {
-    addLeftover({ name: name.trim(), emoji, zone, photoUri });
-    close();
+  const save = async (zone: Zone) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await addLeftover({ name: name.trim(), emoji, zone, photoUri });
+      close();
+    } catch (e) {
+      Alert.alert('ขออภัย', e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const goBack = () => {
@@ -188,9 +197,10 @@ export default function LeftoverFlow({ visible, onClose }: Props) {
                 style={({ pressed }) => [
                   styles.zoneCard,
                   { borderColor: z.color },
-                  pressed && styles.zoneCardPressed,
+                  (pressed || saving) && styles.zoneCardPressed,
                 ]}
                 onPress={() => save(z.zone)}
+                disabled={saving}
               >
                 <Text style={styles.zoneEmoji}>{z.emoji}</Text>
                 <View style={styles.zoneInfo}>
@@ -199,7 +209,9 @@ export default function LeftoverFlow({ visible, onClose }: Props) {
                     เก็บได้ประมาณ {LEFTOVER_SHELF_LIFE[z.zone].label}
                   </Text>
                 </View>
-                <Text style={[styles.zoneSave, { color: z.color }]}>บันทึก ›</Text>
+                <Text style={[styles.zoneSave, { color: z.color }]}>
+                  {saving ? 'กำลังบันทึก...' : 'บันทึก ›'}
+                </Text>
               </Pressable>
             ))}
             {/* คำเตือนประมาณการ — ต้องแสดงทุกจุดที่โชว์อายุแบบประมาณ (PRD ข้อ 8) */}

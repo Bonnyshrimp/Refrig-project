@@ -1,8 +1,8 @@
 import React from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FridgeItem } from '../data/mock';
 import { DANGER_WARNING, ESTIMATE_WARNING, SPOILAGE_GUIDE } from '../data/spoilageGuide';
+import { FridgeItem } from '../types';
 import { colors, fonts, radius } from '../theme';
 import { daysLeftLabel, freshnessRatio, statusLabel, trafficColor } from '../utils/freshness';
 

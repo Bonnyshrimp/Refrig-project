@@ -1,10 +1,21 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ItemDetailSheet from '../components/ItemDetailSheet';
 import ScreenHeader from '../components/ScreenHeader';
+import { useAuth } from '../context/AuthContext';
 import { useFridge } from '../context/FridgeContext';
-import { FridgeItem, Zone } from '../data/mock';
+import { FridgeItem, Zone } from '../types';
 import { cardShadow, colors, fonts, radius } from '../theme';
 import { daysLeftLabel, freshnessRatio, trafficColor } from '../utils/freshness';
 
@@ -66,9 +77,11 @@ function ItemCard({ item, onPress }: { item: FridgeItem; onPress: () => void }) 
 }
 
 export default function FridgeScreen() {
-  const { items, discardItem } = useFridge();
+  const { items, loading, error, refresh, discardItem } = useFridge();
+  const { signOut } = useAuth();
   const [filter, setFilter] = useState<Filter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // เรียงตามความเร่งด่วน — ใกล้หมดอายุขึ้นก่อน (PRD 3.1)
   const visibleItems = useMemo(
@@ -82,14 +95,41 @@ export default function FridgeScreen() {
   const urgentCount = items.filter((i) => i.daysLeft <= 2).length;
   const selectedItem = items.find((i) => i.id === selectedId) ?? null;
 
-  const handleDiscard = (id: string) => {
-    discardItem(id);
-    setSelectedId(null);
+  const handleDiscard = async (id: string) => {
+    try {
+      await discardItem(id);
+      setSelectedId(null);
+    } catch (e) {
+      Alert.alert('ขออภัย', e instanceof Error ? e.message : 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  };
+
+  const confirmSignOut = () => {
+    Alert.alert('ออกจากระบบ', 'ต้องการออกจากระบบใช่ไหม?', [
+      { text: 'ยกเลิก', style: 'cancel' },
+      { text: 'ออกจากระบบ', style: 'destructive', onPress: () => signOut() },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScreenHeader title="ตู้เย็นของฉัน" subtitle={`${items.length} รายการในตู้`} />
+      <ScreenHeader
+        title="ตู้เย็นของฉัน"
+        subtitle={`${items.length} รายการในตู้`}
+        rightAction={{ label: 'ออกจากระบบ', onPress: confirmSignOut }}
+      />
+
+      {error && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>⚠️ {error}</Text>
+        </View>
+      )}
 
       {urgentCount > 0 && (
         <View style={styles.banner}>
@@ -116,16 +156,28 @@ export default function FridgeScreen() {
         })}
       </View>
 
-      <FlatList
-        data={visibleItems}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ItemCard item={item} onPress={() => setSelectedId(item.id)} />}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <Text style={styles.empty}>ไม่มีของในช่องนี้ กด ＋ เพื่อเพิ่มของเข้าตู้</Text>
-        }
-      />
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={colors.chill} />
+          <Text style={styles.loadingText}>กำลังโหลดของในตู้...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={visibleItems}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <ItemCard item={item} onPress={() => setSelectedId(item.id)} />
+          )}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          ListEmptyComponent={
+            <Text style={styles.empty}>ยังไม่มีของในช่องนี้ กด ＋ เพื่อเพิ่มของเข้าตู้</Text>
+          }
+        />
+      )}
 
       <ItemDetailSheet
         item={selectedItem}
@@ -176,6 +228,29 @@ const styles = StyleSheet.create({
   filterTextActive: {
     fontFamily: fonts.bodyBold,
     color: colors.card,
+  },
+  errorBox: {
+    backgroundColor: '#FBEAE7',
+    borderRadius: radius.card,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    padding: 12,
+  },
+  errorText: {
+    fontFamily: fonts.body,
+    fontSize: 13.5,
+    color: colors.red,
+  },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  loadingText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.muted,
   },
   list: {
     padding: 20,
