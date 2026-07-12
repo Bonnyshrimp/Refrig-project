@@ -1,5 +1,7 @@
 // Mock data สำหรับโครงหน้าจอ — ยังไม่ต่อฐานข้อมูล (จะแทนที่ด้วย Supabase ภายหลัง)
 
+import { FoodCategory } from './spoilageGuide';
+
 export type Zone = 'chill' | 'freeze';
 export type ExpirySource = 'label' | 'est';
 
@@ -13,6 +15,7 @@ export interface FridgeItem {
   totalDays: number; // อายุเก็บทั้งหมด ใช้คำนวณแถบความสด
   expirySource: ExpirySource;
   isLeftover: boolean; // ของเหลือ (อาหารปรุงแล้ว)
+  category: FoodCategory; // หมวดสำหรับคู่มือสังเกตของเสีย
 }
 
 export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
@@ -26,6 +29,7 @@ export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
     totalDays: 3,
     expirySource: 'est',
     isLeftover: true,
+    category: 'cooked',
   },
   {
     id: '2',
@@ -37,6 +41,7 @@ export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
     totalDays: 7,
     expirySource: 'label',
     isLeftover: false,
+    category: 'dairy',
   },
   {
     id: '3',
@@ -48,6 +53,7 @@ export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
     totalDays: 5,
     expirySource: 'est',
     isLeftover: false,
+    category: 'veg',
   },
   {
     id: '4',
@@ -59,6 +65,7 @@ export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
     totalDays: 3,
     expirySource: 'est',
     isLeftover: true,
+    category: 'cooked',
   },
   {
     id: '5',
@@ -70,6 +77,7 @@ export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
     totalDays: 90,
     expirySource: 'est',
     isLeftover: false,
+    category: 'meat',
   },
   {
     id: '6',
@@ -81,6 +89,7 @@ export const MOCK_FRIDGE_ITEMS: FridgeItem[] = [
     totalDays: 90,
     expirySource: 'label',
     isLeftover: false,
+    category: 'seafood',
   },
 ];
 

@@ -1,30 +1,30 @@
-import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ItemDetailSheet from '../components/ItemDetailSheet';
 import ScreenHeader from '../components/ScreenHeader';
-import { FridgeItem, MOCK_FRIDGE_ITEMS } from '../data/mock';
+import { FridgeItem, MOCK_FRIDGE_ITEMS, Zone } from '../data/mock';
 import { cardShadow, colors, fonts, radius } from '../theme';
+import { daysLeftLabel, freshnessRatio, trafficColor } from '../utils/freshness';
 
-// ระบบไฟจราจรตาม PRD 3.1: เขียว >3 วัน / เหลือง 1–2 วัน / แดง หมดวันนี้หรือเกินแล้ว
-function trafficColor(daysLeft: number): string {
-  if (daysLeft <= 0) return colors.red;
-  if (daysLeft <= 2) return colors.yellow;
-  return colors.green;
-}
+type Filter = 'all' | Zone;
 
-function daysLeftLabel(daysLeft: number): string {
-  if (daysLeft < 0) return `เกินมา ${-daysLeft} วัน`;
-  if (daysLeft === 0) return 'หมดอายุวันนี้';
-  return `อีก ${daysLeft} วัน`;
-}
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'all', label: 'ทั้งหมด' },
+  { key: 'chill', label: '🧊 ช่องเย็น' },
+  { key: 'freeze', label: '❄️ ช่องแข็ง' },
+];
 
-function ItemCard({ item }: { item: FridgeItem }) {
+function ItemCard({ item, onPress }: { item: FridgeItem; onPress: () => void }) {
   const color = trafficColor(item.daysLeft);
-  const freshness = Math.max(0, Math.min(1, item.daysLeft / item.totalDays));
   const zoneColor = item.zone === 'freeze' ? colors.freeze : colors.chill;
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      onPress={onPress}
+      accessibilityRole="button"
+    >
       <Text style={styles.emoji}>{item.emoji}</Text>
       <View style={styles.info}>
         <View style={styles.nameRow}>
@@ -42,7 +42,12 @@ function ItemCard({ item }: { item: FridgeItem }) {
           {item.storedDays} วัน
         </Text>
         <View style={styles.barTrack}>
-          <View style={[styles.barFill, { width: `${freshness * 100}%`, backgroundColor: color }]} />
+          <View
+            style={[
+              styles.barFill,
+              { width: `${freshnessRatio(item) * 100}%`, backgroundColor: color },
+            ]}
+          />
         </View>
       </View>
       <View style={styles.right}>
@@ -51,18 +56,37 @@ function ItemCard({ item }: { item: FridgeItem }) {
         </View>
         <Text style={[styles.daysLeft, { color }]}>{daysLeftLabel(item.daysLeft)}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function FridgeScreen() {
-  // เรียงตามความเร่งด่วน — ใกล้หมดอายุขึ้นก่อน
-  const items = [...MOCK_FRIDGE_ITEMS].sort((a, b) => a.daysLeft - b.daysLeft);
+  const [items, setItems] = useState<FridgeItem[]>(MOCK_FRIDGE_ITEMS);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // เรียงตามความเร่งด่วน — ใกล้หมดอายุขึ้นก่อน (PRD 3.1)
+  const visibleItems = useMemo(
+    () =>
+      items
+        .filter((i) => filter === 'all' || i.zone === filter)
+        .sort((a, b) => a.daysLeft - b.daysLeft),
+    [items, filter],
+  );
+
   const urgentCount = items.filter((i) => i.daysLeft <= 2).length;
+  const selectedItem = items.find((i) => i.id === selectedId) ?? null;
+
+  // ทิ้งแล้ว: ลบออกจากตู้ (การบันทึกสถิติของทิ้งจะต่อ waste_log ตอนเชื่อมฐานข้อมูล)
+  const discardItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    setSelectedId(null);
+  };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScreenHeader title="ตู้เย็นของฉัน" subtitle={`${items.length} รายการในตู้`} />
+
       {urgentCount > 0 && (
         <View style={styles.banner}>
           <Text style={styles.bannerText}>
@@ -70,12 +94,39 @@ export default function FridgeScreen() {
           </Text>
         </View>
       )}
+
+      <View style={styles.filterRow}>
+        {FILTERS.map((f) => {
+          const active = filter === f.key;
+          return (
+            <Pressable
+              key={f.key}
+              style={[styles.filterChip, active && styles.filterChipActive]}
+              onPress={() => setFilter(f.key)}
+              accessibilityRole="button"
+              accessibilityState={active ? { selected: true } : {}}
+            >
+              <Text style={[styles.filterText, active && styles.filterTextActive]}>{f.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <FlatList
-        data={items}
+        data={visibleItems}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ItemCard item={item} />}
+        renderItem={({ item }) => <ItemCard item={item} onPress={() => setSelectedId(item.id)} />}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <Text style={styles.empty}>ไม่มีของในช่องนี้ กด ＋ เพื่อเพิ่มของเข้าตู้</Text>
+        }
+      />
+
+      <ItemDetailSheet
+        item={selectedItem}
+        onClose={() => setSelectedId(null)}
+        onDiscard={discardItem}
       />
     </SafeAreaView>
   );
@@ -90,7 +141,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FCF3E3',
     borderRadius: radius.card,
     marginHorizontal: 20,
-    marginBottom: 4,
+    marginBottom: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,
   },
@@ -99,10 +150,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.yellow,
   },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 20,
+  },
+  filterChip: {
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    backgroundColor: colors.card,
+  },
+  filterChipActive: {
+    backgroundColor: colors.ink,
+  },
+  filterText: {
+    fontFamily: fonts.body,
+    fontSize: 13.5,
+    color: colors.muted,
+  },
+  filterTextActive: {
+    fontFamily: fonts.bodyBold,
+    color: colors.card,
+  },
   list: {
     padding: 20,
     paddingBottom: 120,
     gap: 12,
+  },
+  empty: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.muted,
+    textAlign: 'center',
+    marginTop: 40,
   },
   card: {
     flexDirection: 'row',
@@ -112,6 +193,9 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 12,
     ...cardShadow,
+  },
+  cardPressed: {
+    opacity: 0.8,
   },
   emoji: {
     fontSize: 32,
