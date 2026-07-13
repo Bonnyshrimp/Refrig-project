@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ItemDetailSheet from '../components/ItemDetailSheet';
 import ScreenHeader from '../components/ScreenHeader';
-import { useAuth } from '../context/AuthContext';
+import SettingsSheet from '../components/SettingsSheet';
 import { useFridge } from '../context/FridgeContext';
 import { FridgeItem, Zone } from '../types';
 import { cardShadow, colors, fonts, radius } from '../theme';
@@ -78,10 +78,10 @@ function ItemCard({ item, onPress }: { item: FridgeItem; onPress: () => void }) 
 
 export default function FridgeScreen() {
   const { items, loading, error, refresh, discardItem } = useFridge();
-  const { signOut } = useAuth();
   const [filter, setFilter] = useState<Filter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   // เรียงตามความเร่งด่วน — ใกล้หมดอายุขึ้นก่อน (PRD 3.1)
   const visibleItems = useMemo(
@@ -110,19 +110,12 @@ export default function FridgeScreen() {
     setRefreshing(false);
   };
 
-  const confirmSignOut = () => {
-    Alert.alert('ออกจากระบบ', 'ต้องการออกจากระบบใช่ไหม?', [
-      { text: 'ยกเลิก', style: 'cancel' },
-      { text: 'ออกจากระบบ', style: 'destructive', onPress: () => signOut() },
-    ]);
-  };
-
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScreenHeader
         title="ตู้เย็นของฉัน"
         subtitle={`${items.length} รายการในตู้`}
-        rightAction={{ label: 'ออกจากระบบ', onPress: confirmSignOut }}
+        rightAction={{ label: '⚙️ ตั้งค่า', onPress: () => setSettingsVisible(true) }}
       />
 
       {error && (
@@ -184,6 +177,7 @@ export default function FridgeScreen() {
         onClose={() => setSelectedId(null)}
         onDiscard={handleDiscard}
       />
+      <SettingsSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </SafeAreaView>
   );
 }

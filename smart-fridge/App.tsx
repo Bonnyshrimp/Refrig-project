@@ -7,14 +7,16 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddSheet from './src/components/AddSheet';
 import LeftoverFlow from './src/components/LeftoverFlow';
 import TabBar from './src/components/TabBar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { FridgeProvider } from './src/context/FridgeContext';
+import { FridgeProvider, useFridge } from './src/context/FridgeContext';
+import { SettingsProvider, useSettings } from './src/context/SettingsContext';
+import { syncExpiryNotifications } from './src/lib/notifications';
 import { isSupabaseConfigured } from './src/lib/supabase';
 import AuthScreen from './src/screens/AuthScreen';
 import FridgeScreen from './src/screens/FridgeScreen';
@@ -46,32 +48,48 @@ function SetupNotice() {
   );
 }
 
+// นัดแจ้งเตือนวันหมดอายุใหม่ทุกครั้งที่ของในตู้หรือการตั้งค่าเปลี่ยน
+function NotificationSync() {
+  const { items, loading } = useFridge();
+  const { settings, loaded } = useSettings();
+
+  useEffect(() => {
+    if (loading || !loaded) return;
+    syncExpiryNotifications(items, settings).catch(() => {});
+  }, [items, settings, loading, loaded]);
+
+  return null;
+}
+
 function MainTabs() {
   const [addVisible, setAddVisible] = useState(false);
   const [leftoverVisible, setLeftoverVisible] = useState(false);
 
   return (
     <FridgeProvider>
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.frost } }}
-          tabBar={(props) => <TabBar {...props} onPressAdd={() => setAddVisible(true)} />}
-        >
-          <Tab.Screen name="Fridge" component={FridgeScreen} />
-          <Tab.Screen name="Menu" component={MenuScreen} />
-          <Tab.Screen name="Shopping" component={ShoppingScreen} />
-          <Tab.Screen name="Health" component={HealthScreen} />
-        </Tab.Navigator>
-        <AddSheet
-          visible={addVisible}
-          onClose={() => setAddVisible(false)}
-          onSelectLeftover={() => {
-            setAddVisible(false);
-            setLeftoverVisible(true);
-          }}
-        />
-        <LeftoverFlow visible={leftoverVisible} onClose={() => setLeftoverVisible(false)} />
-      </NavigationContainer>
+      <SettingsProvider>
+        <NotificationSync />
+        <NavigationContainer>
+          <Tab.Navigator
+            screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.frost } }}
+            tabBar={(props) => <TabBar {...props} onPressAdd={() => setAddVisible(true)} />}
+          >
+            <Tab.Screen name="Fridge" component={FridgeScreen} />
+            <Tab.Screen name="Menu" component={MenuScreen} />
+            <Tab.Screen name="Shopping" component={ShoppingScreen} />
+            <Tab.Screen name="Health" component={HealthScreen} />
+          </Tab.Navigator>
+          <AddSheet
+            visible={addVisible}
+            onClose={() => setAddVisible(false)}
+            onSelectLeftover={() => {
+              setAddVisible(false);
+              setLeftoverVisible(true);
+            }}
+          />
+          <LeftoverFlow visible={leftoverVisible} onClose={() => setLeftoverVisible(false)} />
+        </NavigationContainer>
+      </SettingsProvider>
     </FridgeProvider>
   );
 }
