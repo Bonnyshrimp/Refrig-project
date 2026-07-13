@@ -16,6 +16,34 @@
 5. ในโฟลเดอร์ `smart-fridge` คัดลอกไฟล์ `.env.example` เป็น `.env` แล้วใส่ค่าทั้งสอง
    (ไฟล์ `.env` ไม่ขึ้น git — ห้าม commit คีย์)
 
+## ตั้งค่าฟีเจอร์ AI อ่านฉลาก (Edge Function)
+
+ฟีเจอร์ "ถ่ายรูปฉลาก" ใช้ Claude API ผ่าน Supabase Edge Function
+(API key อยู่ฝั่งเซิร์ฟเวอร์ ไม่อยู่ในแอป):
+
+1. รัน migration `supabase/migrations/0003_label_nutrition.sql` ใน SQL Editor
+2. ติดตั้ง Supabase CLI แล้วล็อกอิน:
+   ```bash
+   npm install -g supabase
+   supabase login
+   ```
+3. ในโฟลเดอร์ `smart-fridge` ผูกโปรเจกต์แล้วตั้ง secret (ใช้ API key จาก
+   console.anthropic.com):
+   ```bash
+   supabase link --project-ref <รหัสโปรเจกต์จาก URL dashboard>
+   supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+   ```
+4. Deploy ฟังก์ชัน:
+   ```bash
+   supabase functions deploy read-label
+   ```
+   (ทางเลือก: สร้างผ่าน Dashboard → Edge Functions → Deploy a new function
+   → ตั้งชื่อ `read-label` → วางโค้ดจาก `supabase/functions/read-label/index.ts`
+   แล้วตั้ง secret ในหน้า Edge Functions → Secrets)
+
+ถ้ายังไม่ deploy ฟังก์ชัน แอปยังใช้งานได้ — flow ถ่ายรูปฉลากจะ fallback
+เป็นกรอกข้อมูลเองอัตโนมัติ
+
 ## วิธีรันทดสอบบนมือถือผ่าน Expo Go
 
 1. ติดตั้งแอป **Expo Go** จาก App Store (iPhone) หรือ Play Store (Android)

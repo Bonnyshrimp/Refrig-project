@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { FoodCategory } from '../data/spoilageGuide';
 import { supabase } from '../lib/supabase';
 import { FoodReferenceRow, FridgeItem, FridgeItemRow, Zone } from '../types';
 import { addDays, diffDays, todayStr } from '../utils/dates';
@@ -24,6 +25,18 @@ export interface NewLeftover {
   photoUri?: string;
 }
 
+// รายการจากการถ่ายรูปฉลาก — วันหมดอายุมาจากฉลากจริง (expiry_source = 'label')
+export interface NewLabeledItem {
+  name: string;
+  emoji: string;
+  zone: Zone;
+  category: FoodCategory;
+  expiryDate: string; // YYYY-MM-DD
+  photoUri?: string;
+  sodiumMg?: number | null;
+  sugarG?: number | null;
+}
+
 interface FridgeContextValue {
   items: FridgeItem[];
   loading: boolean; // โหลดรอบแรกหลังล็อกอิน
@@ -31,6 +44,7 @@ interface FridgeContextValue {
   refresh: () => Promise<void>;
   addLeftover: (input: NewLeftover) => Promise<void>;
   addFromReference: (ref: FoodReferenceRow, zone: Zone) => Promise<void>;
+  addLabeledItem: (input: NewLabeledItem) => Promise<void>;
   discardItem: (id: string) => Promise<void>;
 }
 
@@ -135,6 +149,30 @@ export function FridgeProvider({ children }: { children: React.ReactNode }) {
             expiry_date: addDays(today, days),
             expiry_source: 'est',
             is_leftover: false,
+          })
+          .select()
+          .single();
+        if (err) throw new Error('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+        setItems((prev) => [rowToItem(data as FridgeItemRow), ...prev]);
+      },
+      // ถ่ายรูปฉลาก: วันหมดอายุตามฉลากจริง → expiry_source = 'label' (PRD 3.2)
+      addLabeledItem: async ({ name, emoji, zone, category, expiryDate, photoUri, sodiumMg, sugarG }) => {
+        if (!userId) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+        const { data, error: err } = await supabase
+          .from('fridge_items')
+          .insert({
+            user_id: userId,
+            name,
+            emoji,
+            photo_url: photoUri ?? null,
+            zone,
+            category,
+            stored_at: todayStr(),
+            expiry_date: expiryDate,
+            expiry_source: 'label',
+            is_leftover: false,
+            sodium_mg: sodiumMg ?? null,
+            sugar_g: sugarG ?? null,
           })
           .select()
           .single();

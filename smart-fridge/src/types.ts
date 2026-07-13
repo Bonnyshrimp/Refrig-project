@@ -48,5 +48,17 @@ export interface FridgeItemRow {
   expiry_source: ExpirySource;
   is_leftover: boolean;
   status: 'active' | 'eaten' | 'discarded';
+  sodium_mg: number | null; // จากฉลาก (migration 0003)
+  sugar_g: number | null;
   created_at: string;
+}
+
+// ผลจาก Edge Function read-label (Claude vision อ่านฉลาก)
+export interface LabelReadResult {
+  readable: boolean;
+  name_th: string | null;
+  expiry_date: string | null; // YYYY-MM-DD
+  category: FoodCategory | null;
+  sodium_mg: number | null;
+  sugar_g: number | null;
 }

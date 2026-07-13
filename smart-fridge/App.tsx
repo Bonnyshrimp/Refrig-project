@@ -12,6 +12,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddSheet from './src/components/AddSheet';
 import FreshFlow from './src/components/FreshFlow';
+import LabelFlow from './src/components/LabelFlow';
 import LeftoverFlow from './src/components/LeftoverFlow';
 import TabBar from './src/components/TabBar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
@@ -66,6 +67,7 @@ function MainTabs() {
   const [addVisible, setAddVisible] = useState(false);
   const [leftoverVisible, setLeftoverVisible] = useState(false);
   const [freshVisible, setFreshVisible] = useState(false);
+  const [labelVisible, setLabelVisible] = useState(false);
 
   return (
     <FridgeProvider>
@@ -92,9 +94,14 @@ function MainTabs() {
               setAddVisible(false);
               setFreshVisible(true);
             }}
+            onSelectLabel={() => {
+              setAddVisible(false);
+              setLabelVisible(true);
+            }}
           />
           <LeftoverFlow visible={leftoverVisible} onClose={() => setLeftoverVisible(false)} />
           <FreshFlow visible={freshVisible} onClose={() => setFreshVisible(false)} />
+          <LabelFlow visible={labelVisible} onClose={() => setLabelVisible(false)} />
         </NavigationContainer>
       </SettingsProvider>
     </FridgeProvider>

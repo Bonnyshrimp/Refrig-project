@@ -8,15 +8,21 @@ interface Props {
   onClose: () => void;
   onSelectLeftover: () => void;
   onSelectFresh: () => void;
+  onSelectLabel: () => void;
 }
 
-// 4 ช่องทางเพิ่มของเข้าตู้ ตาม PRD 3.4 — ใช้ได้จริง 2 ช่องทางแรก
+// 4 ช่องทางเพิ่มของเข้าตู้ ตาม PRD 3.4 — เหลือเร็วๆ นี้แค่บาร์โค้ด (Phase 2)
 const COMING_SOON_OPTIONS = [
-  { emoji: '🏷️', title: 'ถ่ายรูปฉลาก', desc: 'AI อ่านชื่อสินค้าและวันหมดอายุให้อัตโนมัติ' },
   { emoji: '📷', title: 'สแกนบาร์โค้ด', desc: 'ดึงข้อมูลสินค้าจากฐานข้อมูล' },
 ];
 
-export default function AddSheet({ visible, onClose, onSelectLeftover, onSelectFresh }: Props) {
+export default function AddSheet({
+  visible,
+  onClose,
+  onSelectLeftover,
+  onSelectFresh,
+  onSelectLabel,
+}: Props) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -55,6 +61,25 @@ export default function AddSheet({ visible, onClose, onSelectLeftover, onSelectF
             <Text style={[styles.optionTitle, styles.optionTitleMain]}>ของสดไม่มีฉลาก</Text>
             <Text style={styles.optionDescMain}>
               เลือกผัก ผลไม้ เนื้อ ระบบใส่อายุมาตรฐานให้
+            </Text>
+          </View>
+          <Text style={styles.optionGo}>›</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.option,
+            styles.optionLabel,
+            pressed && styles.optionPressed,
+          ]}
+          onPress={onSelectLabel}
+          accessibilityRole="button"
+        >
+          <Text style={styles.optionEmoji}>🏷️</Text>
+          <View style={styles.optionInfo}>
+            <Text style={[styles.optionTitle, styles.optionTitleMain]}>ถ่ายรูปฉลาก</Text>
+            <Text style={styles.optionDescMain}>
+              AI อ่านชื่อสินค้าและวันหมดอายุให้อัตโนมัติ
             </Text>
           </View>
           <Text style={styles.optionGo}>›</Text>
@@ -117,6 +142,9 @@ const styles = StyleSheet.create({
   },
   optionFresh: {
     backgroundColor: colors.chill,
+  },
+  optionLabel: {
+    backgroundColor: colors.freeze,
   },
   optionPressed: {
     opacity: 0.85,
