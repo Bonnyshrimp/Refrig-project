@@ -11,6 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AddSheet from './src/components/AddSheet';
+import FreshFlow from './src/components/FreshFlow';
 import LeftoverFlow from './src/components/LeftoverFlow';
 import TabBar from './src/components/TabBar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
@@ -64,6 +65,7 @@ function NotificationSync() {
 function MainTabs() {
   const [addVisible, setAddVisible] = useState(false);
   const [leftoverVisible, setLeftoverVisible] = useState(false);
+  const [freshVisible, setFreshVisible] = useState(false);
 
   return (
     <FridgeProvider>
@@ -86,8 +88,13 @@ function MainTabs() {
               setAddVisible(false);
               setLeftoverVisible(true);
             }}
+            onSelectFresh={() => {
+              setAddVisible(false);
+              setFreshVisible(true);
+            }}
           />
           <LeftoverFlow visible={leftoverVisible} onClose={() => setLeftoverVisible(false)} />
+          <FreshFlow visible={freshVisible} onClose={() => setFreshVisible(false)} />
         </NavigationContainer>
       </SettingsProvider>
     </FridgeProvider>

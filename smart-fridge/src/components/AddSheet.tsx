@@ -7,16 +7,16 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onSelectLeftover: () => void;
+  onSelectFresh: () => void;
 }
 
-// 4 ช่องทางเพิ่มของเข้าตู้ ตาม PRD 3.4 — ตอนนี้ใช้ได้จริงเฉพาะ "เก็บของเหลือ"
+// 4 ช่องทางเพิ่มของเข้าตู้ ตาม PRD 3.4 — ใช้ได้จริง 2 ช่องทางแรก
 const COMING_SOON_OPTIONS = [
   { emoji: '🏷️', title: 'ถ่ายรูปฉลาก', desc: 'AI อ่านชื่อสินค้าและวันหมดอายุให้อัตโนมัติ' },
-  { emoji: '🥬', title: 'ของสดไม่มีฉลาก', desc: 'เลือกผัก ผลไม้ เนื้อ ระบบใส่อายุมาตรฐานให้' },
   { emoji: '📷', title: 'สแกนบาร์โค้ด', desc: 'ดึงข้อมูลสินค้าจากฐานข้อมูล' },
 ];
 
-export default function AddSheet({ visible, onClose, onSelectLeftover }: Props) {
+export default function AddSheet({ visible, onClose, onSelectLeftover, onSelectFresh }: Props) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -36,6 +36,25 @@ export default function AddSheet({ visible, onClose, onSelectLeftover }: Props) 
             <Text style={[styles.optionTitle, styles.optionTitleMain]}>เก็บของเหลือ</Text>
             <Text style={styles.optionDescMain}>
               ถ่ายรูปกับข้าว/ขนมที่กินไม่หมด บันทึกใน 2 แตะ
+            </Text>
+          </View>
+          <Text style={styles.optionGo}>›</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.option,
+            styles.optionFresh,
+            pressed && styles.optionPressed,
+          ]}
+          onPress={onSelectFresh}
+          accessibilityRole="button"
+        >
+          <Text style={styles.optionEmoji}>🥬</Text>
+          <View style={styles.optionInfo}>
+            <Text style={[styles.optionTitle, styles.optionTitleMain]}>ของสดไม่มีฉลาก</Text>
+            <Text style={styles.optionDescMain}>
+              เลือกผัก ผลไม้ เนื้อ ระบบใส่อายุมาตรฐานให้
             </Text>
           </View>
           <Text style={styles.optionGo}>›</Text>
@@ -95,6 +114,9 @@ const styles = StyleSheet.create({
   },
   optionMain: {
     backgroundColor: colors.green,
+  },
+  optionFresh: {
+    backgroundColor: colors.chill,
   },
   optionPressed: {
     opacity: 0.85,

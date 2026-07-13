@@ -18,6 +18,22 @@ export interface FridgeItem {
   photoUri?: string; // รูปที่ผู้ใช้ถ่าย/เลือกเอง ถ้าไม่มีใช้อีโมจิ
 }
 
+// แถวจากตาราง food_reference (migration 0002) — อายุเก็บมาตรฐานจาก
+// USDA FoodKeeper + ตารางอาหารไทย ทุกค่าเป็น "ประมาณการ" เสมอ
+export interface FoodReferenceRow {
+  id: string;
+  name_th: string;
+  name_en: string;
+  emoji: string;
+  category: FoodCategory;
+  chill_days_min: number | null;
+  chill_days_max: number | null;
+  freeze_days_min: number | null;
+  freeze_days_max: number | null;
+  pantry_days: number | null;
+  source: 'usda_foodkeeper' | 'thai_table';
+}
+
 // แถวจากตาราง fridge_items (คอลัมน์ตาม migration 0001)
 export interface FridgeItemRow {
   id: string;

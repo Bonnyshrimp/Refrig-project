@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { supabase } from '../lib/supabase';
-import { FridgeItem, FridgeItemRow, Zone } from '../types';
+import { FoodReferenceRow, FridgeItem, FridgeItemRow, Zone } from '../types';
 import { addDays, diffDays, todayStr } from '../utils/dates';
 import { useAuth } from './AuthContext';
 
@@ -30,6 +30,7 @@ interface FridgeContextValue {
   error: string | null;
   refresh: () => Promise<void>;
   addLeftover: (input: NewLeftover) => Promise<void>;
+  addFromReference: (ref: FoodReferenceRow, zone: Zone) => Promise<void>;
   discardItem: (id: string) => Promise<void>;
 }
 
@@ -108,6 +109,32 @@ export function FridgeProvider({ children }: { children: React.ReactNode }) {
             expiry_date: addDays(today, LEFTOVER_SHELF_LIFE[zone].days),
             expiry_source: 'est',
             is_leftover: true,
+          })
+          .select()
+          .single();
+        if (err) throw new Error('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+        setItems((prev) => [rowToItem(data as FridgeItemRow), ...prev]);
+      },
+      // ของสดไม่มีฉลาก: ใส่อายุมาตรฐานจาก food_reference (PRD 3.4 ช่องทางที่ 3)
+      // ใช้ค่า _min เผื่อความปลอดภัย และติด expiry_source = 'est' เสมอ
+      addFromReference: async (ref, zone) => {
+        if (!userId) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+        const days = zone === 'chill' ? ref.chill_days_min : ref.freeze_days_min;
+        if (days == null) throw new Error('ของชนิดนี้ไม่แนะนำให้เก็บช่องนี้');
+        const today = todayStr();
+        const { data, error: err } = await supabase
+          .from('fridge_items')
+          .insert({
+            user_id: userId,
+            name: ref.name_th,
+            emoji: ref.emoji,
+            photo_url: null,
+            zone,
+            category: ref.category,
+            stored_at: today,
+            expiry_date: addDays(today, days),
+            expiry_source: 'est',
+            is_leftover: false,
           })
           .select()
           .single();
