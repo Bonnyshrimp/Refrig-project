@@ -46,6 +46,7 @@ interface FridgeContextValue {
   addFromReference: (ref: FoodReferenceRow, zone: Zone) => Promise<void>;
   addLabeledItem: (input: NewLabeledItem) => Promise<void>;
   discardItem: (id: string) => Promise<void>;
+  consumeItems: (ids: string[]) => Promise<void>;
 }
 
 const FridgeContext = createContext<FridgeContextValue | null>(null);
@@ -178,6 +179,16 @@ export function FridgeProvider({ children }: { children: React.ReactNode }) {
           .single();
         if (err) throw new Error('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
         setItems((prev) => [rowToItem(data as FridgeItemRow), ...prev]);
+      },
+      // ทำเมนูแล้ว: ตัดวัตถุดิบออกจากตู้ (status = eaten) — PRD 4.1
+      consumeItems: async (ids) => {
+        if (!userId) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+        const { error: err } = await supabase
+          .from('fridge_items')
+          .update({ status: 'eaten' })
+          .in('id', ids);
+        if (err) throw new Error('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง');
+        setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
       },
       // ทิ้งแล้ว: เปลี่ยนสถานะ + บันทึกสถิติของทิ้งลง waste_log (PRD 3.3)
       discardItem: async (id) => {

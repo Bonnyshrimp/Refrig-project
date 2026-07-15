@@ -1,11 +1,5 @@
-// Mock data ของแท็บที่ยังไม่ต่อฐานข้อมูล (เมนู/ซื้อของ/สุขภาพ — Phase 2)
-// ส่วนของในตู้เย็นย้ายไปอ่าน/เขียน Supabase จริงแล้ว (ดู FridgeContext)
-
-export const MOCK_MENU_TODAY = [
-  { id: 'm1', name: 'ผัดผักกาดขาวหมูสับ', kcal: 320, urgent: true },
-  { id: 'm2', name: 'ข้าวผัดแกงเขียวหวาน', kcal: 480, urgent: true },
-  { id: 'm3', name: 'อกไก่ย่างสมุนไพร', kcal: 290, urgent: false },
-];
+// Mock data ของแท็บที่ยังไม่ต่อฐานข้อมูล (ซื้อของ/สุขภาพ — Phase 2)
+// ตู้เย็นและเมนูใช้ข้อมูลจริงแล้ว (FridgeContext + meals_log)
 
 export const MOCK_SHOPPING = [
   { id: 's1', name: 'นมสด 1 ลิตร', reason: 'นมจะหมด 14 ก.ค. (อีก 2 วัน)', done: false },
